@@ -2946,7 +2946,11 @@ button.card:disabled {
 
 /* =========================================================== 한게임식 로비 (네이비) */
 .hg-shell {
-  min-height: 100dvh;
+  /* 정확히 뷰포트 높이로 고정하고 내부(.hg-body)가 스크롤을 담당한다.
+     body 가 overflow:hidden 이라 min-height 로 두면 넘치는 내용(상점 등)이
+     잘려서 휠 스크롤이 안 되던 문제를 수정. */
+  height: 100dvh;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   background:
@@ -3008,6 +3012,8 @@ button.card:disabled {
 
 .hg-body {
   flex: 1;
+  min-height: 0; /* flex 자식이 줄어들 수 있어야 overflow 스크롤이 동작 */
+  overflow-y: auto; /* 로비/상점/랭킹 등 본문이 길면 여기서 스크롤 */
   display: flex;
   gap: 16px;
   padding: 16px 18px 24px;
