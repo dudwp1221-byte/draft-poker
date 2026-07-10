@@ -1,50 +1,103 @@
-// 게임 방법(튜토리얼) 모달 — 일반 포커만 아는 사람을 위한 드래프트 포커 규칙 안내
+// 게임 방법(튜토리얼) — 실제 카드 그래픽으로 보여주는 시각형 안내
 import { useState } from 'react';
+import type { Card } from '../game/deck';
+import { CardView } from './CardView';
 
-const STEPS: { icon: string; title: string; body: string[] }[] = [
+const c = (rank: number, suit: Card['suit']): Card => ({ rank, suit });
+
+// 각 단계: 짧은 설명 + 카드/버튼 시각 데모
+const STEPS: { icon: string; title: string; caption: string; visual: 'hand' | 'draft' | 'bet' | 'showdown' }[] = [
   {
     icon: '🃏',
     title: '드래프트 포커란?',
-    body: [
-      '일반 포커처럼 "가장 높은 5장 족보"로 승부해요.',
-      '하지만 카드를 받는 방식이 다릅니다 — 카드 뭉치에서 원하는 카드를 직접',
-      '골라 내 손패를 만들어가는 "드래프트" 방식이에요.',
-      '홀덤 족보(원페어 ~ 로열 플러시)를 그대로 쓰니 족보만 알면 금방 익숙해집니다.',
-    ],
+    caption: '홀덤과 똑같은 족보로, 가장 높은 5장으로 승부해요. 아래는 "플러시(같은 무늬 5장)" 예시.',
+    visual: 'hand',
   },
   {
     icon: '🔄',
-    title: '① 드래프트 — 카드 고르기',
-    body: [
-      '각자 카드 뭉치를 받습니다. 그중 1장을 골라 손패에 넣고,',
-      '남은 뭉치는 옆 사람에게 넘겨요(패스). 넘겨받은 뭉치에서 또 1장을 고르고…',
-      '이렇게 돌아가며 손패를 모읍니다. 패스 방향(시계/반시계)은 매 판 랜덤!',
-      '마지막 픽은 남은 2장 중 1장만 선택하고 1장은 버립니다.',
-    ],
+    title: '① 드래프트 — 골라서 옆으로',
+    caption: '받은 뭉치에서 1장만 골라 내 손패에 넣고, 나머지는 옆 사람에게 넘겨요. 매 판 방향은 랜덤!',
+    visual: 'draft',
   },
   {
     icon: '💰',
-    title: '② 베팅 — 3번의 베팅 구간',
-    body: [
-      '드래프트를 3구간으로 나눠, 각 구간이 끝날 때마다 베팅해요.',
-      '한게임식 용어를 씁니다:',
-      '• 삥 = 최소 베팅 · 쿼터 = 팟의 1/4 · 하프 = 팟의 1/2 · 풀 = 팟 전액',
-      '• 다이 = 폴드(포기) · 콜 = 받기 · 따당 = 상대 벳의 2배로 올리기',
-      '체크는 없어요 — 선은 무조건 베팅합니다. 콜 뒤에는 리레이즈 금지(콜/다이만).',
-      '제한 시간은 모두 15초 — 베팅 15초(넘기면 자동 다이) · 드래프트 픽 15초(넘기면 자동 선택).',
-    ],
+    title: '② 베팅 — 3구간, 15초',
+    caption: '삥=최소 · 쿼터=팟¼ · 하프=팟½ · 풀=팟전액 / 다이=폴드 · 콜=받기 · 따당=2배. 콜 뒤엔 콜·다이만.',
+    visual: 'bet',
   },
   {
     icon: '🏆',
-    title: '③ 쇼다운 — 승부',
-    body: [
-      '마지막 베팅까지 끝나면 손패를 공개해 가장 높은 5장 족보로 겨룹니다.',
-      '홀덤과 동일한 족보 순위를 사용하고, 사이드팟도 지원해요.',
-      '이긴 사람이 다음 판의 "선(딜러)"이 됩니다.',
-      '이제 규칙을 익혔으니, 방을 만들거나 "혼자연습"으로 봇과 연습해보세요!',
-    ],
+    title: '③ 쇼다운 — 승부!',
+    caption: '남은 사람끼리 5장 족보로 비교. 높은 쪽이 이기고 다음 판 "선"이 됩니다.',
+    visual: 'showdown',
   },
 ];
+
+function Visual({ kind }: { kind: string }) {
+  if (kind === 'hand') {
+    const hand = [c(14, 's'), c(11, 's'), c(9, 's'), c(6, 's'), c(3, 's')];
+    return (
+      <div className="tut-cards">
+        {hand.map((card, i) => (
+          <CardView key={i} card={card} size="sm" highlight />
+        ))}
+      </div>
+    );
+  }
+  if (kind === 'draft') {
+    const packet = [c(7, 'h'), c(13, 's'), c(2, 'c'), c(10, 'd')];
+    return (
+      <div className="tut-draft">
+        <div className="tut-cards">
+          {packet.map((card, i) => (
+            <CardView key={i} card={card} size="sm" highlight={i === 1} dimmed={i !== 1} />
+          ))}
+        </div>
+        <div className="tut-draft-legend">
+          <span className="tut-pick">✋ 1장 선택</span>
+          <span className="tut-pass">나머지 → 옆으로 패스 ➡️</span>
+        </div>
+      </div>
+    );
+  }
+  if (kind === 'bet') {
+    return (
+      <div className="tut-bet">
+        <div className="tut-pot">💰 팟</div>
+        <div className="bet-bar tut-bet-bar">
+          <span className="hgbtn hgbtn-die">다이</span>
+          <span className="hgbtn hgbtn-call">콜</span>
+          <span className="hgbtn hgbtn-ping">삥/따당</span>
+          <span className="hgbtn hgbtn-half">쿼터·하프</span>
+          <span className="hgbtn hgbtn-allin">풀</span>
+        </div>
+      </div>
+    );
+  }
+  // showdown
+  const mine = [c(14, 'd'), c(14, 's'), c(10, 'c'), c(7, 'h'), c(4, 's')]; // 원페어(A) — 예시 승
+  const opp = [c(13, 'h'), c(9, 'd'), c(9, 's'), c(5, 'c'), c(2, 'h')]; // 원페어(9)
+  return (
+    <div className="tut-show">
+      <div className="tut-show-row win">
+        <span className="tut-show-tag">🏆 나 · 페어 A</span>
+        <div className="tut-cards">
+          {mine.map((card, i) => (
+            <CardView key={i} card={card} size="sm" highlight={card.rank === 14} />
+          ))}
+        </div>
+      </div>
+      <div className="tut-show-row lose">
+        <span className="tut-show-tag">상대 · 페어 9</span>
+        <div className="tut-cards">
+          {opp.map((card, i) => (
+            <CardView key={i} card={card} size="sm" dimmed />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function Tutorial({ onClose }: { onClose: () => void }) {
   const [i, setI] = useState(0);
@@ -56,13 +109,17 @@ export function Tutorial({ onClose }: { onClose: () => void }) {
         <button type="button" className="tut-close" onClick={onClose} aria-label="닫기">
           ✕
         </button>
-        <div className="tut-icon">{step.icon}</div>
-        <h2 className="tut-title">{step.title}</h2>
-        <div className="tut-body">
-          {step.body.map((line, k) => (
-            <p key={k}>{line}</p>
-          ))}
+        <div className="tut-head">
+          <span className="tut-icon-sm">{step.icon}</span>
+          <h2 className="tut-title">{step.title}</h2>
         </div>
+
+        <div className="tut-stage">
+          <Visual kind={step.visual} />
+        </div>
+
+        <p className="tut-caption">{step.caption}</p>
+
         <div className="tut-dots">
           {STEPS.map((_, k) => (
             <span key={k} className={k === i ? 'on' : ''} />
