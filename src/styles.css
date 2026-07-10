@@ -3826,3 +3826,45 @@ button.card:disabled {
 .tut-show-tag { font-size: 12.5px; font-weight: 800; white-space: nowrap; min-width: 92px; }
 .tut-show-row.win .tut-show-tag { color: #8fe6a8; }
 .tut-show-row.lose .tut-show-tag { color: #9aa3b8; }
+
+/* 튜토리얼 확장: 스텝 카운트 · 족보 · 구간 · 팁 */
+.tut-head { position: relative; }
+.tut-step-count {
+  position: absolute;
+  right: 0;
+  top: 2px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #8b93a8;
+}
+.tut-ranks { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+.tut-rank-row { display: flex; align-items: center; gap: 10px; }
+.tut-rank-label {
+  min-width: 108px;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #ffd873;
+  white-space: nowrap;
+}
+.tut-ranks .tut-cards { justify-content: flex-start; gap: 4px; }
+.tut-seg { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.tut-seg-block {
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: rgba(120, 150, 255, 0.16);
+  border: 1px solid rgba(120, 150, 255, 0.4);
+  color: #cdd9ff;
+  font-weight: 800;
+  font-size: 13px;
+}
+.tut-seg-arrow { color: #ffe08a; font-size: 13px; font-weight: 700; }
+.tut-tips { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+.tut-tip {
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 13.5px;
+  color: #dfe4f0;
+}
+.tut-tip strong { color: #ffd873; }
