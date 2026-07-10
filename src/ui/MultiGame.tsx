@@ -43,7 +43,7 @@ import { sfx, isMuted, setMuted } from './sound';
 import type { EmoType } from './Emoticons';
 
 const BET_GRACE_MS = 18000; // 클라 15초 + 유예 3초
-const PICK_GRACE_MS = 23000; // 클라 20초 + 유예 3초
+const PICK_GRACE_MS = 18000; // 클라 15초 + 유예 3초
 const NEXT_HAND_MS = 6500;
 const MIN_PLAYERS = 4; // 이 인원 미만이면 매치를 멈추고 대기실로
 

@@ -74,7 +74,7 @@ export function Dock({
           <div className="pick-area">
             <TurnTimer
               key={`pick-${gs.handNumber}-${gs.draftStep}`}
-              ms={20000}
+              ms={15000}
               onTimeout={() => onPick(Math.floor(Math.random() * me.packet!.length))}
             />
             <div className="dock-label gold">
