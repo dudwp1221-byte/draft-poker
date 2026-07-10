@@ -98,6 +98,7 @@ export default function App() {
           setRoomId(null);
           setScreen('lobby');
         }}
+        onWaiting={() => setScreen('room')}
       />
     );
   }
