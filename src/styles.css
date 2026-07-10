@@ -3868,3 +3868,23 @@ button.card:disabled {
   color: #dfe4f0;
 }
 .tut-tip strong { color: #ffd873; }
+
+/* 튜토리얼 인터랙티브 드래프트 */
+.tut-play { display: flex; flex-direction: column; gap: 14px; width: 100%; }
+.tut-play-hand, .tut-play-packet { display: flex; flex-direction: column; gap: 6px; align-items: center; }
+.tut-play-label { font-size: 12px; font-weight: 800; color: #ffe08a; }
+.tut-play-label.pass { color: #8fd0ff; }
+.tut-play-empty { font-size: 12.5px; color: #8b93a8; }
+.tut-play-packet .card-clickable { cursor: pointer; transition: transform 0.12s ease; }
+.tut-play-packet .card-clickable:hover { transform: translateY(-6px); }
+.tut-play-done {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #8fe6a8;
+  padding: 8px 0;
+}
+.tut-replay { font-size: 12.5px; padding: 6px 14px; }
