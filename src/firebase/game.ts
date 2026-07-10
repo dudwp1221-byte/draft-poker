@@ -107,11 +107,14 @@ export async function walletAdd(uid: string, delta: number): Promise<void> {
 
 /** 잔액이 충분할 때만 차감. 성공 여부 반환 */
 export async function walletTryDeduct(uid: string, amount: number): Promise<boolean> {
-  const res = await runTransaction(ref(db(), `users/${uid}/wallet`), (cur) => {
-    const w = typeof cur === 'number' ? cur : 0;
-    return w >= amount ? w - amount : undefined;
-  });
-  return res.committed;
+  // 주의: runTransaction에서 부족 시 undefined(중단)를 반환하면, 로컬 캐시가 비어(cur=null)
+  // 있을 때 잔액이 충분해도 잘못 '부족' 처리되는 버그가 있었다.
+  // → get()으로 서버 값을 확인한 뒤 walletAdd(수렴형 트랜잭션)로 차감한다.
+  const snap = await get(ref(db(), `users/${uid}/wallet`));
+  const cur = typeof snap.val() === 'number' ? snap.val() : 0;
+  if (cur < amount) return false;
+  await walletAdd(uid, -amount);
+  return true;
 }
 
 export async function fetchWallet(uid: string): Promise<number> {
@@ -223,11 +226,11 @@ export async function buyItem(
     if (meta.items[itemId]) return { ok: false, message: '이미 보유 중이에요.' };
   }
   if (item.priceGems) {
-    const ok = await runTransaction(ref(db(), `users/${uid}/gems`), (cur) => {
-      const g = typeof cur === 'number' ? cur : 0;
-      return g >= item.priceGems! ? g - item.priceGems! : undefined;
-    });
-    if (!ok.committed) return { ok: false, message: '젬이 부족해요.' };
+    // walletTryDeduct와 같은 이유로 트랜잭션 대신 get()+gemsAdd 사용
+    const snap = await get(ref(db(), `users/${uid}/gems`));
+    const g = typeof snap.val() === 'number' ? snap.val() : 0;
+    if (g < item.priceGems) return { ok: false, message: '젬이 부족해요.' };
+    await gemsAdd(uid, -item.priceGems);
   }
   if (item.priceGold) {
     const ok = await walletTryDeduct(uid, item.priceGold);
