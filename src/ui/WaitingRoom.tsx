@@ -96,7 +96,7 @@ export function WaitingRoom({
   const me = players.find((p) => p.uid === profile.uid);
   const isHost = room.host === profile.uid;
   const ch = CHANNELS.find((c) => c.id === room.channelId) ?? CHANNELS[1];
-  const allReady = total >= 3 && players.every((p) => p.ready || p.uid === room.host);
+  const allReady = total >= 4 && players.every((p) => p.ready || p.uid === room.host);
   const shortMoney = myWallet !== null && myWallet < ch.buyin;
 
   const doAddBot = () => {
@@ -210,8 +210,8 @@ export function WaitingRoom({
                   disabled={!allReady || shortMoney}
                   onClick={() => startRoom(roomId)}
                 >
-                  {total < 3
-                    ? `시작 대기 (최소 3인, 현재 ${total}인)`
+                  {total < 4
+                    ? `시작 대기 (최소 4인, 현재 ${total}인)`
                     : allReady
                       ? '게임 시작'
                       : '전원 준비를 기다리는 중…'}

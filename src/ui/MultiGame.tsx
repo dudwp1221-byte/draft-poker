@@ -45,15 +45,18 @@ import type { EmoType } from './Emoticons';
 const BET_GRACE_MS = 18000; // 클라 15초 + 유예 3초
 const PICK_GRACE_MS = 23000; // 클라 20초 + 유예 3초
 const NEXT_HAND_MS = 6500;
+const MIN_PLAYERS = 4; // 이 인원 미만이면 매치를 멈추고 대기실로
 
 export function MultiGame({
   roomId,
   profile,
   onExit,
+  onWaiting,
 }: {
   roomId: string;
   profile: UserProfile;
   onExit: () => void;
+  onWaiting: () => void;
 }) {
   const [gs, setGs] = useState<GameState | null>(null);
   const [room, setRoom] = useState<Room | null>(null);
@@ -172,6 +175,37 @@ export function MultiGame({
     await walletAdd(uid, creditBefore);
   };
 
+  // 인원 부족(4명 미만) 시: 칩을 지갑으로 정산하고 방을 '대기' 상태로 되돌린다 (호스트 전용)
+  const pauseToWaiting = async () => {
+    if (!isHost || settled.current) return;
+    settled.current = true;
+    const g = latest.current;
+    const dbRef = getDatabase(getFirebaseApp());
+    if (g && (await claimSettlement(roomId))) {
+      await Promise.all(
+        seats.map((uid, i) => {
+          const chips = g.players[i]?.chips ?? 0;
+          return chips > 0 ? walletAdd(uid, chips) : Promise.resolve();
+        }),
+      );
+    }
+    // 매치 리셋: 새 게임을 다시 시작할 수 있도록 상태/좌석 비우고 대기로
+    await update(ref(dbRef, `rooms/${roomId}`), {
+      status: 'waiting',
+      state: null,
+      seats: null,
+      settled: null,
+    });
+  };
+
+  // 다음 핸드로 진행하되, 남은(칩 있는) 인원이 4명 미만이면 대기실로 전환
+  const nextHandOrPause = () => {
+    const g = latest.current;
+    const solvent = g ? g.players.filter((p) => p.chips > 0).length : 0;
+    if (solvent >= MIN_PLAYERS) applyRef.current((gg) => startHand(gg));
+    else pauseToWaiting();
+  };
+
   // ---------- 호스트: 액션 큐 처리 ----------
   useEffect(() => {
     if (!isHost) return;
@@ -247,7 +281,7 @@ export function MultiGame({
       return () => clearTimeout(t);
     }
     if (gs.phase === 'showdown') {
-      const t = setTimeout(() => applyRef.current((g) => startHand(g)), NEXT_HAND_MS);
+      const t = setTimeout(() => nextHandOrPause(), NEXT_HAND_MS);
       return () => clearTimeout(t);
     }
     if (gs.phase === 'gameover' && !settled.current) {
@@ -360,8 +394,19 @@ export function MultiGame({
   };
 
   // 나가기 버튼: 판이 끝난 상태면 즉시 나가고, 진행 중이면 '이번 판 종료 후 퇴장'을 예약(토글)
+  const meNow = gs && mySeat >= 0 ? gs.players[mySeat] : undefined;
+  const meFolded = !!meNow?.folded;
+  const meOut = !!meNow?.out;
   const requestExit = () => {
-    if (!gs || gs.phase === 'gameover' || gs.phase === 'showdown' || mySeat < 0) {
+    // 판이 끝났거나, 내가 이미 다이(폴드)/탈락했으면 볼 것 없이 바로 나간다
+    if (
+      !gs ||
+      gs.phase === 'gameover' ||
+      gs.phase === 'showdown' ||
+      mySeat < 0 ||
+      meFolded ||
+      meOut
+    ) {
       doExit();
       return;
     }
@@ -370,11 +415,21 @@ export function MultiGame({
 
   // 예약해 둔 경우, 현재 판이 끝나면(쇼다운/게임오버) 자동으로 나간다
   useEffect(() => {
-    if (leaveReserved && gs && (gs.phase === 'showdown' || gs.phase === 'gameover')) {
+    if (
+      leaveReserved &&
+      gs &&
+      (gs.phase === 'showdown' || gs.phase === 'gameover' || meFolded || meOut)
+    ) {
       doExit();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [leaveReserved, gs?.phase]);
+  }, [leaveReserved, gs?.phase, meFolded, meOut]);
+
+  // 매치가 대기 상태로 되돌아가면(인원 부족 등) 대기실 화면으로 이동
+  useEffect(() => {
+    if (room && room.status === 'waiting') onWaiting();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [room?.status]);
 
   const toggleMute = () => {
     setMuted(!muted);
@@ -448,7 +503,7 @@ export function MultiGame({
           mySeat={mySeat}
           canRebuy={myWallet >= channel.buyin}
           onNext={() => {
-            if (isHost) applyRef.current((g) => startHand(g));
+            if (isHost) nextHandOrPause();
           }}
           nextLabel={isHost ? '다음 핸드' : '잠시 후 자동 시작…'}
           nextDisabled={!isHost}
