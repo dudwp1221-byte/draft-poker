@@ -229,9 +229,6 @@ export function MultiLobby({
       {/* 상단 바: 로고 + 채널 탭 */}
       <header className="hg-top">
         <span className="hg-logo">♠ 드래프트 포커</span>
-        <button type="button" className="hg-help-btn" onClick={() => setShowTutorial(true)}>
-          🎓 게임 방법
-        </button>
         <nav className="hg-tabs">
           {CHANNELS.map((c) => (
             <button
@@ -456,6 +453,13 @@ export function MultiLobby({
             ))}
           </div>
 
+          <button
+            type="button"
+            className="hg-btn-gray hg-help-side"
+            onClick={() => setShowTutorial(true)}
+          >
+            🎓 게임 방법
+          </button>
           <button type="button" className="hg-btn-gray hg-exit" onClick={onLogout}>
             로그아웃
           </button>
