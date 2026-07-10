@@ -539,6 +539,17 @@ export function Table({
   const nextCp = gs.checkpoints.find((c) => c > gs.draftStep);
   const picksToBet = nextCp !== undefined ? nextCp - gs.draftStep : 0;
 
+  // 지금 누가 진행 중인지: 베팅=현재 차례 / 드래프트=아직 안 고른 사람들
+  const stillPicking = gs.players.filter(
+    (p) => !p.out && !p.folded && p.packet !== null && p.pendingPick === null,
+  );
+  const waitingLabel =
+    gs.phase === 'betting' && gs.toAct !== null
+      ? `🎯 ${gs.players[gs.toAct].name}님 차례`
+      : gs.phase === 'draft' && stillPicking.length > 0
+        ? `⏳ 고르는 중 · ${stillPicking.map((p) => p.name).join(', ')}`
+        : '';
+
   return (
     <div className="table-wrap">
       <div className="felt">
@@ -566,6 +577,7 @@ export function Table({
           )}
         </div>
         <div className="dir-badge">패스 {gs.direction === 1 ? '⟳ 시계 방향' : '⟲ 반시계 방향'}</div>
+        {waitingLabel && <div className="waiting-badge">{waitingLabel}</div>}
       </div>
 
       {gs.players.map((p) => (

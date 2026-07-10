@@ -274,7 +274,7 @@ export function MultiLobby({
                     maxLength={20}
                   />
                   <div className="seg">
-                    {[3, 4, 5, 6].map((n) => (
+                    {[4, 5].map((n) => (
                       <button
                         key={n}
                         type="button"

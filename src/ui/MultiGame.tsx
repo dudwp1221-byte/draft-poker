@@ -63,6 +63,7 @@ export function MultiGame({
   const [myWallet, setMyWallet] = useState(0);
   const [myCardback, setMyCardback] = useState('');
   const [emotePlus, setEmotePlus] = useState(false);
+  const [leaveReserved, setLeaveReserved] = useState(false); // 진행 중 나가기 예약
 
   useEffect(() => {
     fetchMeta(profile.uid).then((m) => {
@@ -346,7 +347,8 @@ export function MultiGame({
     } else pushAction(roomId, { kind: 'rebuy', seat: mySeat, uid: profile.uid });
   };
 
-  const exitGame = async () => {
+  // 실제 퇴장: 남은 칩을 지갑으로 회수하고 방에서 나감
+  const doExit = async () => {
     if (exited.current) return;
     exited.current = true;
     if (gs && gs.phase !== 'gameover' && mySeat >= 0) {
@@ -356,6 +358,23 @@ export function MultiGame({
     await leaveRoom(roomId, profile.uid).catch(() => {});
     onExit();
   };
+
+  // 나가기 버튼: 판이 끝난 상태면 즉시 나가고, 진행 중이면 '이번 판 종료 후 퇴장'을 예약(토글)
+  const requestExit = () => {
+    if (!gs || gs.phase === 'gameover' || gs.phase === 'showdown' || mySeat < 0) {
+      doExit();
+      return;
+    }
+    setLeaveReserved((r) => !r);
+  };
+
+  // 예약해 둔 경우, 현재 판이 끝나면(쇼다운/게임오버) 자동으로 나간다
+  useEffect(() => {
+    if (leaveReserved && gs && (gs.phase === 'showdown' || gs.phase === 'gameover')) {
+      doExit();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [leaveReserved, gs?.phase]);
 
   const toggleMute = () => {
     setMuted(!muted);
@@ -368,7 +387,7 @@ export function MultiGame({
       <div className="lobby">
         <div className="lobby-panel">
           <p className="room-empty">게임을 준비하는 중… 🃏</p>
-          <button type="button" className="link-btn" onClick={exitGame}>
+          <button type="button" className="link-btn" onClick={doExit}>
             ← 나가기
           </button>
         </div>
@@ -388,17 +407,19 @@ export function MultiGame({
           </button>
           <button
             type="button"
-            className="exit-btn"
-            onClick={() => {
-              if (gs.phase === 'gameover' || window.confirm('나가면 현재 칩이 지갑으로 회수되고 게임에서 탈락합니다.'))
-                exitGame();
-            }}
+            className={`exit-btn${leaveReserved ? ' reserved' : ''}`}
+            onClick={requestExit}
           >
-            나가기 ✕
+            {leaveReserved ? '나가기 예약됨 · 취소' : '나가기 ✕'}
           </button>
         </span>
       </header>
 
+      {leaveReserved && (
+        <div className="leave-reserved-note">
+          이번 판이 끝나면 자동으로 나갑니다 · 나가기를 다시 누르면 예약 취소
+        </div>
+      )}
       <Table gs={gs} mySeat={mySeat} emoTrigger={emoTrigger} />
 
       <Dock
@@ -432,7 +453,7 @@ export function MultiGame({
           nextLabel={isHost ? '다음 핸드' : '잠시 후 자동 시작…'}
           nextDisabled={!isHost}
           onRebuy={sendRebuy}
-          onLobby={exitGame}
+          onLobby={doExit}
         />
       )}
     </div>
