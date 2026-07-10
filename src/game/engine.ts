@@ -466,7 +466,7 @@ function endBettingRound(gs: GameState): void {
 function updateWinStreaks(gs: GameState, winners: Set<number>): void {
   for (const p of gs.players) {
     if (winners.has(p.seat)) p.winStreak += 1;
-    else if (!p.out) p.winStreak = 0;
+    else p.winStreak = 0; // 이기지 못한 모두 연승 리셋 (패배/폴드/탈락 포함)
   }
 }
 

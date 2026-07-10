@@ -17,4 +17,4 @@ export const CHANNELS: Channel[] = [
 
 export const BANKRUPT_BONUS = 500_000;
 
-export const DAILY_BONUS = 100_000;
+export const DAILY_BONUS = 500_000;
