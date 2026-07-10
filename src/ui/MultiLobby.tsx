@@ -19,6 +19,7 @@ import { tierOf, nextTier, GEM_REWARDS, PASS_DAILY_EXTRA } from '../game/meta';
 import { Avatar, type AvatarKind } from './Avatar';
 import { ProfilePanel, ShopPanel, RankingPanel } from './MetaPanels';
 import { CHARACTERS } from './characters';
+import { Tutorial } from './Tutorial';
 import { addBot, startRoom } from '../firebase/rooms';
 
 export function MultiLobby({
@@ -41,6 +42,19 @@ export function MultiLobby({
   const [wallet, setWallet] = useState<number | null>(null);
   const [dailyReady, setDailyReady] = useState(false);
   const [view, setView] = useState<'rooms' | 'profile' | 'shop' | 'rank'>('rooms');
+  const [showTutorial, setShowTutorial] = useState(false);
+
+  // 처음 방문한 유저에게 자동으로 게임 방법 안내
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem('dp_tutorial_seen')) {
+        setShowTutorial(true);
+        localStorage.setItem('dp_tutorial_seen', '1');
+      }
+    } catch {
+      /* localStorage 미지원 환경 무시 */
+    }
+  }, []);
   const [myTierMult, setMyTierMult] = useState(1);
   const [gems, setGems] = useState(0);
   const [passActive, setPassActive] = useState(false);
@@ -211,9 +225,13 @@ export function MultiLobby({
 
   return (
     <div className="hg-shell">
+      {showTutorial && <Tutorial onClose={() => setShowTutorial(false)} />}
       {/* 상단 바: 로고 + 채널 탭 */}
       <header className="hg-top">
         <span className="hg-logo">♠ 드래프트 포커</span>
+        <button type="button" className="hg-help-btn" onClick={() => setShowTutorial(true)}>
+          🎓 게임 방법
+        </button>
         <nav className="hg-tabs">
           {CHANNELS.map((c) => (
             <button

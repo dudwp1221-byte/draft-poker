@@ -214,9 +214,14 @@ export function ShopPanel({
     if (busy) return;
     setBusy(true);
     setMsg('');
-    const res = await buyItem(profile.uid, it.id);
-    setMsg(res.message);
-    setMsgOk(res.ok);
+    try {
+      const res = await buyItem(profile.uid, it.id);
+      setMsg(res.message);
+      setMsgOk(res.ok);
+    } catch {
+      setMsg('구매 처리 중 오류가 발생했어요. 잠시 후 다시 시도해주세요.');
+      setMsgOk(false);
+    }
     load();
     onChanged?.();
     setBusy(false);
