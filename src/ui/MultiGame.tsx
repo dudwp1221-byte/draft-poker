@@ -427,9 +427,24 @@ export function MultiGame({
 
   // 매치가 대기 상태로 되돌아가면(인원 부족 등) 대기실 화면으로 이동
   useEffect(() => {
+    if (exited.current) return; // 이미 나가는 중이면(파산 로비행 등) 무시
     if (room && room.status === 'waiting') onWaiting();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [room?.status]);
+
+  // 파산(칩 0)한 내가, 이번 판이 끝나고도 리바이하지 않으면 자동으로 로비로 나간다
+  useEffect(() => {
+    if (!gs || mySeat < 0 || gs.phase !== 'showdown') return;
+    const me = gs.players[mySeat];
+    if (!me || me.chips > 0) return; // 파산 아님
+    const t = setTimeout(() => {
+      const g = latest.current;
+      const meNow = g?.players[mySeat];
+      if (meNow && meNow.chips <= 0) doExit(); // 여전히 파산이면 로비로
+    }, Math.max(0, NEXT_HAND_MS - 600));
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gs?.phase, gs?.handNumber, mySeat]);
 
   const toggleMute = () => {
     setMuted(!muted);
